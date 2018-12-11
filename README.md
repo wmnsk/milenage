@@ -2,6 +2,11 @@
 
 MILENAGE algorithm implemented in the Go Programming Language.
 
+[![CircleCI](https://circleci.com/gh/wmnsk/milenage.svg?style=svg)](https://circleci.com/gh/wmnsk/milenage)
+[![GoDoc](https://godoc.org/github.com/wmnsk/milenage?status.svg)](https://godoc.org/github.com/wmnsk/milenage)
+[![Go Report Card](https://goreportcard.com/badge/github.com/wmnsk/milenage)](https://goreportcard.com/report/github.com/wmnsk/milenage)
+[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/wmnsk/milenage/blob/master/LICENSE)
+
 # Quickstart
 
 Compute OPc from K and OP.
