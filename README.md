@@ -7,9 +7,7 @@ MILENAGE algorithm implemented in the Go Programming Language.
 [![Go Report Card](https://goreportcard.com/badge/github.com/wmnsk/milenage)](https://goreportcard.com/report/github.com/wmnsk/milenage)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/wmnsk/milenage/blob/master/LICENSE)
 
-# Quickstart
-
-Compute OPc from K and OP.
+## Quickstart
 
 ```go
 // initialize Milenage first with K, OP, RAND, SQN, and AMF.
@@ -34,7 +32,7 @@ if err != nil {
 }
 
 // get RES, CK, IK, AK by executing F2345()
-res, ck, ik, ak, err := mil.F1()
+res, ck, ik, ak, err := mil.F2345()
 if err != nil {
     log.Fatal(err)
 }
