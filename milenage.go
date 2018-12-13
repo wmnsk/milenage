@@ -149,7 +149,7 @@ func (m *Milenage) F1Star() ([8]byte, error) {
 	}
 
 	for i := 0; i < 8; i++ {
-		m.MACS[i] = mac[i]
+		m.MACS[i] = mac[i+8]
 	}
 
 	return m.MACS, nil
