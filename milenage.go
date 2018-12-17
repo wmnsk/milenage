@@ -10,6 +10,8 @@ package milenage
 import (
 	"crypto/aes"
 	"encoding/binary"
+
+	"github.com/wmnsk/gopcua/errors"
 )
 
 // Milenage is a set of parameters used/generated in MILENAGE algorithm.
@@ -45,7 +47,7 @@ type Milenage struct {
 }
 
 // New initializes a new MILENAGE algorithm.
-// The k, op, rand should be 128-bit length. Otherwise the values in *Milenage
+// The k, op, and rand should be 128-bit length. Otherwise the values in *Milenage
 // is filled with 0 instead of returning errors.
 func New(k, op, rand []byte, sqn uint64, amf uint16) *Milenage {
 	m := &Milenage{}
@@ -79,48 +81,31 @@ func New(k, op, rand []byte, sqn uint64, amf uint16) *Milenage {
 	return m
 }
 
-func (m *Milenage) f1base() ([]byte, error) {
+// ComputeOPc is a helper that provides users to retrieve OPc value from
+// the K and OP given.
+func ComputeOPc(k, op []byte) ([16]byte, error) {
+	m := New(k, op, make([]byte, 16), 0, 0)
 	if err := m.computeOPc(); err != nil {
-		return nil, err
+		return [16]byte{}, err
+	}
+	return m.OPc, nil
+}
+
+// ComputeAll fills all the fields in *Milenage struct.
+func (m *Milenage) ComputeAll() error {
+	if _, err := m.F1(); err != nil {
+		return errors.Wrap(err, "failed F1())")
 	}
 
-	var rijndaelInput [16]byte
-	for i := 0; i < 16; i++ {
-		rijndaelInput[i] = m.RAND[i] ^ m.OPc[i]
+	if _, err := m.F1Star(); err != nil {
+		return errors.Wrap(err, "failed F1Star()")
 	}
 
-	temp, err := encrypt(m.K[:], rijndaelInput[:])
-	if err != nil {
-		return nil, err
+	if _, _, _, _, err := m.F2345(); err != nil {
+		return errors.Wrap(err, "failed F2345()")
 	}
 
-	var in1 [16]byte
-	for i := 0; i < 6; i++ {
-		in1[i] = m.SQN[i]
-		in1[i+8] = m.SQN[i]
-	}
-	for i := 0; i < 2; i++ {
-		in1[i+6] = m.AMF[i]
-		in1[i+14] = m.AMF[i]
-	}
-
-	// XOR op_c and in1, rotate by r1=64, and XOR
-	// on the constant c1 (which is all zeroes)
-	for i := 0; i < 16; i++ {
-		rijndaelInput[(i+8)%16] = in1[i] ^ m.OPc[i]
-	}
-	/* XOR on the value temp computed before */
-
-	for i := 0; i < 16; i++ {
-		rijndaelInput[i] ^= temp[i]
-	}
-
-	out, err := encrypt(m.K[:], rijndaelInput[:])
-	if err != nil {
-		return nil, err
-	}
-
-	return xor(out, m.OPc[:]), nil
+	return nil
 }
 
 // F1 is the network authentication function.
@@ -233,7 +218,7 @@ func (m *Milenage) F2345() (res [8]byte, ck, ik [16]byte, ak [6]byte, err error)
 
 // F5Star is the anonymity key derivation function for the re-synchronisation message.
 // F5Star takes key K and random challenge RAND, and returns resynch anonymity key AK.
-func (m *Milenage) F5Star(rand [16]byte) (ak [6]byte, err error) {
+func (m *Milenage) F5Star() (ak [6]byte, err error) {
 	if err := m.computeOPc(); err != nil {
 		return [6]byte{}, err
 	}
@@ -311,13 +296,46 @@ func encrypt(key, plain []byte) ([]byte, error) {
 	block.Encrypt(encrypted, plain)
 	return encrypted, nil
 }
-
-// ComputeOPc is a helper that provides users to retrieve OPc value from
-// the K and OP given.
-func ComputeOPc(k, op []byte) ([16]byte, error) {
-	m := New(k, op, make([]byte, 16), 0, 0)
+func (m *Milenage) f1base() ([]byte, error) {
 	if err := m.computeOPc(); err != nil {
-		return [16]byte{}, err
+		return nil, err
 	}
-	return m.OPc, nil
+
+	var rijndaelInput [16]byte
+	for i := 0; i < 16; i++ {
+		rijndaelInput[i] = m.RAND[i] ^ m.OPc[i]
+	}
+
+	temp, err := encrypt(m.K[:], rijndaelInput[:])
+	if err != nil {
+		return nil, err
+	}
+
+	var in1 [16]byte
+	for i := 0; i < 6; i++ {
+		in1[i] = m.SQN[i]
+		in1[i+8] = m.SQN[i]
+	}
+	for i := 0; i < 2; i++ {
+		in1[i+6] = m.AMF[i]
+		in1[i+14] = m.AMF[i]
+	}
+
+	// XOR op_c and in1, rotate by r1=64, and XOR
+	// on the constant c1 (which is all zeroes)
+	for i := 0; i < 16; i++ {
+		rijndaelInput[(i+8)%16] = in1[i] ^ m.OPc[i]
+	}
+	/* XOR on the value temp computed before */
+
+	for i := 0; i < 16; i++ {
+		rijndaelInput[i] ^= temp[i]
+	}
+
+	out, err := encrypt(m.K[:], rijndaelInput[:])
+	if err != nil {
+		return nil, err
+	}
+
+	return xor(out, m.OPc[:]), nil
 }
