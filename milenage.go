@@ -11,7 +11,7 @@ import (
 	"crypto/aes"
 	"encoding/binary"
 
-	"github.com/wmnsk/gopcua/errors"
+	"github.com/pkg/errors"
 )
 
 // Milenage is a set of parameters used/generated in MILENAGE algorithm.
