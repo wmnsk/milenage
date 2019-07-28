@@ -1,4 +1,4 @@
-// Copyright 2018 milenage authors. All rights reserved.
+// Copyright 2018-2019 milenage authors. All rights reserved.
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
@@ -296,6 +296,7 @@ func encrypt(key, plain []byte) ([]byte, error) {
 	block.Encrypt(encrypted, plain)
 	return encrypted, nil
 }
+
 func (m *Milenage) f1base() ([]byte, error) {
 	if err := m.computeOPc(); err != nil {
 		return nil, err
