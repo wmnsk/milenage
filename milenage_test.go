@@ -127,14 +127,13 @@ func TestF2345(t *testing.T) {
 }
 
 func TestComputeOPc(t *testing.T) {
-	for _, c := range cases {
-		got, err := milenage.ComputeOPc(c.input.K[:], c.input.OP[:])
-		if err != nil {
-			t.Fatal(err)
-		}
+	c := cases[0]
+	got, err := milenage.ComputeOPc(c.input.K[:], c.input.OP[:])
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		if diff := cmp.Diff(got, c.expected.OPc); diff != "" {
-			t.Errorf("%s failed: \n%s", c.description, diff)
-		}
+	if diff := cmp.Diff(got, c.expected.OPc); diff != "" {
+		t.Errorf("%s failed: \n%s", c.description, diff)
 	}
 }
