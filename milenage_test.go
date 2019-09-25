@@ -93,7 +93,7 @@ func TestF1(t *testing.T) {
 
 func TestF1Star(t *testing.T) {
 	for _, c := range cases {
-		macS, err := c.input.F1Star()
+		macS, err := c.input.F1Star(c.input.SQN, c.input.AMF)
 		if err != nil {
 			t.Fatal(err)
 		}

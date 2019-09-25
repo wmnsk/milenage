@@ -16,8 +16,10 @@ import (
 
 // Milenage is a set of parameters used/generated in MILENAGE algorithm.
 type Milenage struct {
-	// AK is a 48-bit anonymity key that is the output of either of the functions f5 and f5*.
+	// AK is a 48-bit anonymity key that is the output of either of the functions f5.
 	AK []byte
+	// AKS is a 48-bit anonymity key that is the output of either of the functions f5*.
+	AKS []byte
 	// AMF is a 16-bit authentication management field that is an input to the functions f1 and f1*.
 	AMF []byte
 	// CK is a 128-bit confidentiality key that is the output of the function f3.
@@ -118,7 +120,7 @@ func (m *Milenage) ComputeAll() error {
 		return errors.Wrap(err, "failed F1())")
 	}
 
-	if _, err := m.F1Star(); err != nil {
+	if _, err := m.F1Star(m.SQN, m.AMF); err != nil {
 		return errors.Wrap(err, "failed F1Star()")
 	}
 
@@ -133,32 +135,26 @@ func (m *Milenage) ComputeAll() error {
 // F1 computes network authentication code MAC-A from key K, random challenge RAND,
 // sequence number SQN and authentication management field AMF.
 func (m *Milenage) F1() ([]byte, error) {
-	mac, err := m.f1base()
+	mac, err := m.f1base(m.SQN, m.AMF)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := 0; i < 8; i++ {
-		m.MACA[i] = mac[i]
-	}
-
-	return m.MACA, nil
+	m.MACA = mac[:8]
+	return mac[:8], nil
 }
 
 // F1Star is the re-synchronisation message authentication function.
 // F1Star computes resynch authentication code MAC-S from key K, random challenge RAND,
 // sequence number SQN and authentication management field AMF.
-func (m *Milenage) F1Star() ([]byte, error) {
-	mac, err := m.f1base()
+func (m *Milenage) F1Star(sqn, amf []byte) ([]byte, error) {
+	mac, err := m.f1base(sqn, amf)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := 0; i < 8; i++ {
-		m.MACS[i] = mac[i+8]
-	}
-
-	return m.MACS, nil
+	m.MACS = mac[8:]
+	return mac[8:], nil
 }
 
 // F2345 takes key K and random challenge RAND, and returns response RES,
@@ -191,14 +187,9 @@ func (m *Milenage) F2345() (res []byte, ck, ik []byte, ak []byte, err error) {
 	if err != nil {
 		return
 	}
-	out = xor(out, m.OPc)
-
-	for i := 0; i < 8; i++ {
-		m.RES[i] = out[i+8]
-	}
-	for i := 0; i < 6; i++ {
-		m.AK[i] = out[i]
-	}
+	tmp := xor(out, m.OPc)
+	res = tmp[8:]
+	ak = tmp[:6]
 
 	// To obtain output block OUT3: XOR OPc and TEMP, rotate by r3=32, and XOR on the
 	// constant c3 (which is all zeroes except that the next to last bit is 1).
@@ -211,10 +202,7 @@ func (m *Milenage) F2345() (res []byte, ck, ik []byte, ak []byte, err error) {
 	if err != nil {
 		return
 	}
-	out = xor(out, m.OPc)
-	for i := 0; i < 16; i++ {
-		m.CK[i] = out[i]
-	}
+	ck = xor(out, m.OPc)
 
 	// To obtain output block OUT4: XOR OPc and TEMP, rotate by r4=64, and XOR on the
 	// constant c4 (which is all zeroes except that the 2nd from last bit is 1).
@@ -228,21 +216,18 @@ func (m *Milenage) F2345() (res []byte, ck, ik []byte, ak []byte, err error) {
 	if err != nil {
 		return
 	}
-	out = xor(out, m.OPc)
-	for i := 0; i < 16; i++ {
-		m.IK[i] = out[i]
-	}
+	ik = xor(out, m.OPc)
 
-	res = m.RES
-	ck = m.CK
-	ik = m.IK
-	ak = m.AK
+	m.RES = res
+	m.CK = ck
+	m.IK = ik
+	m.AK = ak
 	return
 }
 
 // F5Star is the anonymity key derivation function for the re-synchronisation message.
 // F5Star takes key K and random challenge RAND, and returns resynch anonymity key AK.
-func (m *Milenage) F5Star() (ak []byte, err error) {
+func (m *Milenage) F5Star() (aks []byte, err error) {
 	if m.OPc == nil {
 		if err := m.computeOPc(); err != nil {
 			return nil, err
@@ -254,7 +239,7 @@ func (m *Milenage) F5Star() (ak []byte, err error) {
 		rijndaelInput[i] = m.RAND[i] ^ m.OPc[i]
 	}
 
-	temp, err := encrypt(m.K, rijndaelInput)
+	tmp, err := encrypt(m.K, rijndaelInput)
 	if err != nil {
 		return
 	}
@@ -262,7 +247,7 @@ func (m *Milenage) F5Star() (ak []byte, err error) {
 	// To obtain output block OUT5: XOR OPc and TEMP, rotate by r5=96, and XOR on the
 	// constant c5 (which is all zeroes except that the 3rd from last bit is 1).
 	for i := 0; i < 16; i++ {
-		rijndaelInput[(i+4)%16] = temp[i] ^ m.OPc[i]
+		rijndaelInput[(i+4)%16] = tmp[i] ^ m.OPc[i]
 	}
 	rijndaelInput[15] ^= 8
 
@@ -270,12 +255,9 @@ func (m *Milenage) F5Star() (ak []byte, err error) {
 	if err != nil {
 		return
 	}
-	out = xor(out, m.OPc)
-	for i := 0; i < 6; i++ {
-		ak[i] = out[i]
-	}
 
-	m.AK = ak
+	aks = xor(out, m.OPc)
+	m.AKS = aks
 	return
 }
 
@@ -308,10 +290,12 @@ func xor(b1, b2 []byte) []byte {
 		l = len(b2)
 	}
 
+	// don't update b1
+	out := make([]byte, l)
 	for i := 0; i < l; i++ {
-		b1[i] ^= b2[i]
+		out[i] = b1[i] ^ b2[i]
 	}
-	return b1
+	return out
 }
 
 func encrypt(key, plain []byte) ([]byte, error) {
@@ -325,7 +309,7 @@ func encrypt(key, plain []byte) ([]byte, error) {
 	return encrypted, nil
 }
 
-func (m *Milenage) f1base() ([]byte, error) {
+func (m *Milenage) f1base(sqn, amf []byte) ([]byte, error) {
 	if m.OPc == nil {
 		if err := m.computeOPc(); err != nil {
 			return nil, err
@@ -344,12 +328,12 @@ func (m *Milenage) f1base() ([]byte, error) {
 
 	in1 := make([]byte, 16)
 	for i := 0; i < 6; i++ {
-		in1[i] = m.SQN[i]
-		in1[i+8] = m.SQN[i]
+		in1[i] = sqn[i]
+		in1[i+8] = sqn[i]
 	}
 	for i := 0; i < 2; i++ {
-		in1[i+6] = m.AMF[i]
-		in1[i+14] = m.AMF[i]
+		in1[i+6] = amf[i]
+		in1[i+14] = amf[i]
 	}
 
 	// XOR op_c and in1, rotate by r1=64, and XOR
