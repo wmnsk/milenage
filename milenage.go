@@ -256,7 +256,7 @@ func (m *Milenage) F5Star() (aks []byte, err error) {
 		return
 	}
 
-	aks = xor(out, m.OPc)
+	aks = xor(out, m.OPc)[:6]
 	m.AKS = aks
 	return
 }
