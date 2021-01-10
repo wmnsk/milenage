@@ -222,7 +222,7 @@ func (m *Milenage) F2345() (res, ck, ik, ak []byte, err error) {
 	m.CK = ck
 	m.IK = ik
 	m.AK = ak
-	return
+	return res, ck, ik, ak, nil
 }
 
 // F5Star is the anonymity key derivation function for the re-synchronisation message.
@@ -258,7 +258,7 @@ func (m *Milenage) F5Star() (aks []byte, err error) {
 
 	aks = xor(out, m.OPc)[:6]
 	m.AKS = aks
-	return
+	return aks, nil
 }
 
 // computeOPc computes OPc from K and OP inside m.
