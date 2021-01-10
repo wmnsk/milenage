@@ -159,7 +159,7 @@ func (m *Milenage) F1Star(sqn, amf []byte) ([]byte, error) {
 
 // F2345 takes key K and random challenge RAND, and returns response RES,
 // confidentiality key CK, integrity key IK and anonymity key AK.
-func (m *Milenage) F2345() (res []byte, ck, ik []byte, ak []byte, err error) {
+func (m *Milenage) F2345() (res, ck, ik, ak []byte, err error) {
 	if m.OPc == nil {
 		if err := m.computeOPc(); err != nil {
 			return nil, nil, nil, nil, err
