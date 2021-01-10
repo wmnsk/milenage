@@ -120,7 +120,7 @@ func (m *Milenage) ComputeAll() error {
 		return errors.Wrap(err, "failed F1())")
 	}
 
-	if _, err := m.F1Star(m.SQN, m.AMF); err != nil {
+	if _, err := m.F1Star(m.SQN, []byte{0x00, 0x00}); err != nil {
 		return errors.Wrap(err, "failed F1Star()")
 	}
 
@@ -147,6 +147,9 @@ func (m *Milenage) F1() ([]byte, error) {
 // F1Star is the re-synchronisation message authentication function.
 // F1Star computes resynch authentication code MAC-S from key K, random challenge RAND,
 // sequence number SQN and authentication management field AMF.
+//
+// Note that the AMF value should be zero to be compliant with the specification
+// TS 33.102 6.3.3 (This method just computes with the given value).
 func (m *Milenage) F1Star(sqn, amf []byte) ([]byte, error) {
 	mac, err := m.f1base(sqn, amf)
 	if err != nil {
