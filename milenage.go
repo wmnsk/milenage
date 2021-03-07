@@ -10,8 +10,7 @@ package milenage
 import (
 	"crypto/aes"
 	"encoding/binary"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // Milenage is a set of parameters used/generated in MILENAGE algorithm.
@@ -117,15 +116,15 @@ func ComputeOPc(k, op []byte) ([]byte, error) {
 // ComputeAll fills all the fields in *Milenage struct.
 func (m *Milenage) ComputeAll() error {
 	if _, err := m.F1(); err != nil {
-		return errors.Wrap(err, "failed F1())")
+		return fmt.Errorf("F1() failed: %w", err)
 	}
 
 	if _, err := m.F1Star(m.SQN, []byte{0x00, 0x00}); err != nil {
-		return errors.Wrap(err, "failed F1Star()")
+		return fmt.Errorf("F1Star() failed: %w", err)
 	}
 
 	if _, _, _, _, err := m.F2345(); err != nil {
-		return errors.Wrap(err, "failed F2345()")
+		return fmt.Errorf("F2345() failed: %w", err)
 	}
 
 	return nil
