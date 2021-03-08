@@ -303,7 +303,9 @@ func (m *Milenage) ComputeRESStar(mcc, mnc string) ([]byte, error) {
 	copy(k[0:16], m.CK)
 	copy(k[16:32], m.IK)
 	mac := hmac.New(sha256.New, k)
-	mac.Write(b)
+	if _, err := mac.Write(b); err != nil {
+		return nil, fmt.Errorf("failed to compute RES*: %w", err)
+	}
 
 	out := mac.Sum(nil)
 	return out[len(out)-16:], nil
