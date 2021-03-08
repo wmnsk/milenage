@@ -270,7 +270,7 @@ func (m *Milenage) F5Star() (aks []byte, err error) {
 // ComputeRESStar computes RESStar from serving network name, RAND and RES
 // as described in A.4 RES* and XRES* derivation function, TS 33.501.
 //
-// Note that this function should be called after all other calcurations
+// Note that this function should be called after all other calculations
 // is done (to generate RAND and RES).
 func (m *Milenage) ComputeRESStar(mcc, mnc string) ([]byte, error) {
 	if len(mcc) != 3 {
