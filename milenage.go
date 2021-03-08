@@ -9,6 +9,8 @@ package milenage
 
 import (
 	"crypto/aes"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 )
@@ -40,6 +42,8 @@ type Milenage struct {
 	RAND []byte
 	// RES is a 64-bit signed response that is the output of the function f2.
 	RES []byte
+	// RESStar or RES* is a 128-bit response that is used in 5G.
+	RESStar []byte
 	// SQN is a 48-bit sequence number that is an input to either of the functions f1 and f1*.
 	// (For f1* this input is more precisely called SQNMS.)
 	SQN []byte
@@ -261,6 +265,48 @@ func (m *Milenage) F5Star() (aks []byte, err error) {
 	aks = xor(out, m.OPc)[:6]
 	m.AKS = aks
 	return aks, nil
+}
+
+// ComputeRESStar computes RESStar from serving network name, RAND and RES
+// as described in A.4 RES* and XRES* derivation function, TS 33.501.
+//
+// Note that this function should be called after all other calcurations
+// is done (to generate RAND and RES).
+func (m *Milenage) ComputeRESStar(mcc, mnc string) ([]byte, error) {
+	if len(mcc) != 3 {
+		return nil, fmt.Errorf("invalid MCC: %s", mcc)
+	}
+	if l := len(mnc); l == 2 {
+		mnc = "0" + mnc
+	} else if l != 3 {
+		return nil, fmt.Errorf("invalid MNC: %s", mnc)
+	}
+
+	snn := []byte(fmt.Sprintf("5G:mnc%s.mcc%s.3gppnetwork.org", mnc, mcc))
+	if l := len(snn); l != 32 {
+		return nil, fmt.Errorf("failed to build SNN: %s", snn)
+	}
+
+	b := make([]byte, 63)
+	b[0] = 0x6b
+
+	copy(b[1:33], snn)
+	binary.BigEndian.PutUint16(b[33:35], uint16(len(snn)))
+
+	copy(b[35:51], m.RAND)
+	binary.BigEndian.PutUint16(b[51:53], uint16(len(m.RAND)))
+
+	copy(b[53:61], m.RES)
+	binary.BigEndian.PutUint16(b[61:63], uint16(len(m.RES)))
+
+	k := make([]byte, 32)
+	copy(k[0:16], m.CK)
+	copy(k[16:32], m.IK)
+	mac := hmac.New(sha256.New, k)
+	mac.Write(b)
+
+	out := mac.Sum(nil)
+	return out[len(out)-16:], nil
 }
 
 // computeOPc computes OPc from K and OP inside m.
