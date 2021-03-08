@@ -24,17 +24,25 @@ mil := milenage.New(
 )
 ```
 
+Fill all fields(except 5G RES*) at once using `ComputeAll()`.
+
+```go
+if err := mil.ComputeAll(); err != nil {
+	// ...
+}
+```
+
 Get MAC-A and MAC-S. This also fills each field.
 
 ```go
 macA, err := mil.F1()
 if err != nil {
-	log.Fatal(err)
+	// ...
 }
 
 macS, err := mil.F1Star()
 if err != nil {
-	log.Fatal(err)
+	// ...
 }
 ```
 
@@ -43,11 +51,20 @@ Get RES, CK, IK, AK. This also fills each field.
 ```go
 res, ck, ik, ak, err := mil.F2345()
 if err != nil {
-	log.Fatal(err)
+	// ...
 }
 ```
 
-Get OPc from K and OP. This is not the method on *Milenage.
+Get RES* for 5G with `ComputeRESStar()` by giving MCC and MNC.
+
+```go
+resStar, err := mil.ComputeRESStar("001", "01")
+if err != nil {
+	// ...
+}
+```
+
+Get OPc from K and OP. This is not the method on `*Milenage`.
 
 ```go
 opc, err := milenage.ComputeOPc(
@@ -55,7 +72,7 @@ opc, err := milenage.ComputeOPc(
 	[]byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
 )
 if err != nil {
-	log.Fatal(err)
+	// ...
 }
 ```
 
