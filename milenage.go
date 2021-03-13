@@ -69,6 +69,7 @@ func New(k, op, rand []byte, sqn uint64, amf uint16) *Milenage {
 		CK:   make([]byte, 16),
 		IK:   make([]byte, 16),
 		AK:   make([]byte, 6),
+		AKS:  make([]byte, 6),
 	}
 
 	s := make([]byte, 8)
@@ -97,6 +98,7 @@ func NewWithOPc(k, opc, rand []byte, sqn uint64, amf uint16) *Milenage {
 		CK:   make([]byte, 16),
 		IK:   make([]byte, 16),
 		AK:   make([]byte, 6),
+		AKS:  make([]byte, 6),
 	}
 
 	s := make([]byte, 8)
@@ -136,6 +138,10 @@ func (m *Milenage) ComputeAll() error {
 
 	if _, _, _, _, err := m.F2345(); err != nil {
 		return fmt.Errorf("F2345() failed: %w", err)
+	}
+
+	if _, err := m.F5Star(); err != nil {
+		return fmt.Errorf("F5Star() failed: %w", err)
 	}
 
 	return nil
@@ -506,9 +512,9 @@ func (m *Milenage) validateLength() error {
 	if len(m.AK) != 6 {
 		return fmt.Errorf("length of AK should be %d, got: %d", 6, len(m.AK))
 	}
-	//if len(m.AKS) != 6 {
-	//	return fmt.Errorf("length of AKS should be %d, got: %d", 6, len(m.AKS))
-	//}
+	if len(m.AKS) != 6 {
+		return fmt.Errorf("length of AKS should be %d, got: %d", 6, len(m.AKS))
+	}
 
 	return nil
 }
