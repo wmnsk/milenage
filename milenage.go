@@ -17,22 +17,8 @@ import (
 
 // Milenage is a set of parameters used/generated in MILENAGE algorithm.
 type Milenage struct {
-	// AK is a 48-bit anonymity key that is the output of either of the functions f5.
-	AK []byte
-	// AKS is a 48-bit anonymity key that is the output of either of the functions f5*.
-	AKS []byte
-	// AMF is a 16-bit authentication management field that is an input to the functions f1 and f1*.
-	AMF []byte
-	// CK is a 128-bit confidentiality key that is the output of the function f3.
-	CK []byte
-	// IK is a 128-bit integrity key that is the output of the function f4.
-	IK []byte
 	// K is a 128-bit subscriber key that is an input to the functions f1, f1*, f2, f3, f4, f5 and f5*.
 	K []byte
-	// MACA is a 64-bit network authentication code that is the output of the function f1.
-	MACA []byte
-	// MACS is a 64-bit resynchronisation authentication code that is the output of the function f1*.
-	MACS []byte
 	// OP is a 128-bit Operator Variant Algorithm Configuration Field that is a component of the
 	// functions f1, f1*, f2, f3, f4, f5 and f5*.
 	OP []byte
@@ -40,13 +26,31 @@ type Milenage struct {
 	OPc []byte
 	// RAND is a 128-bit random challenge that is an input to the functions f1, f1*, f2, f3, f4, f5 and f5*.
 	RAND []byte
-	// RES is a 64-bit signed response that is the output of the function f2.
-	RES []byte
-	// RESStar or RES* is a 128-bit response that is used in 5G.
-	RESStar []byte
+
 	// SQN is a 48-bit sequence number that is an input to either of the functions f1 and f1*.
 	// (For f1* this input is more precisely called SQNMS.)
 	SQN []byte
+	// AMF is a 16-bit authentication management field that is an input to the functions f1 and f1*.
+	AMF []byte
+
+	// MACA is a 64-bit network authentication code that is the output of the function f1.
+	MACA []byte
+	// MACS is a 64-bit resynchronisation authentication code that is the output of the function f1*.
+	MACS []byte
+
+	// RES is a 64-bit signed response that is the output of the function f2.
+	RES []byte
+	// CK is a 128-bit confidentiality key that is the output of the function f3.
+	CK []byte
+	// IK is a 128-bit integrity key that is the output of the function f4.
+	IK []byte
+	// AK is a 48-bit anonymity key that is the output of either of the functions f5.
+	AK []byte
+	// AKS is a 48-bit anonymity key that is the output of either of the functions f5*.
+	AKS []byte
+
+	// RESStar or RES* is a 128-bit response that is used in 5G.
+	RESStar []byte
 }
 
 // New initializes a new MILENAGE algorithm.
@@ -55,15 +59,15 @@ func New(k, op, rand []byte, sqn uint64, amf uint16) *Milenage {
 		K:    k,
 		OP:   op,
 		OPc:  nil,
+		RAND: rand,
 		AMF:  make([]byte, 2),
 		SQN:  make([]byte, 6),
+		MACA: make([]byte, 8),
+		MACS: make([]byte, 8),
+		RES:  make([]byte, 8),
 		CK:   make([]byte, 16),
 		IK:   make([]byte, 16),
 		AK:   make([]byte, 6),
-		MACA: make([]byte, 8),
-		MACS: make([]byte, 8),
-		RAND: rand,
-		RES:  make([]byte, 8),
 	}
 
 	s := make([]byte, 8)
@@ -83,15 +87,15 @@ func NewWithOPc(k, opc, rand []byte, sqn uint64, amf uint16) *Milenage {
 		K:    k,
 		OP:   nil,
 		OPc:  opc,
+		RAND: rand,
 		AMF:  make([]byte, 2),
 		SQN:  make([]byte, 6),
+		MACA: make([]byte, 8),
+		MACS: make([]byte, 8),
+		RES:  make([]byte, 8),
 		CK:   make([]byte, 16),
 		IK:   make([]byte, 16),
 		AK:   make([]byte, 6),
-		MACA: make([]byte, 8),
-		MACS: make([]byte, 8),
-		RAND: rand,
-		RES:  make([]byte, 8),
 	}
 
 	s := make([]byte, 8)
