@@ -24,12 +24,19 @@ mil := milenage.New(
 )
 ```
 
-Fill all fields(except 5G RES*) at once using `ComputeAll()`.
+Or, with OPc.
 
 ```go
-if err := mil.ComputeAll(); err != nil {
-	// ...
-}
+mil := milenage.NewWithOPc(
+	// K
+	[]byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
+	// OPc
+	[]byte{0x62, 0xe7, 0x5b, 0x8d, 0x6f, 0xa5, 0xbf, 0x46, 0xec, 0x87, 0xa9, 0x27, 0x6f, 0x9d, 0xf5, 0x4d},
+	// RAND
+	[]byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
+	0x000000000001, // SQN
+	0x8000,         // AMF
+)
 ```
 
 Get MAC-A and MAC-S. This also fills each field.
@@ -89,6 +96,16 @@ if err != nil {
 // as described in 6.3.3, TS 33.102.
 auts, err := mil.GenerateAUTS()
 if err != nil {
+	// ...
+}
+```
+
+Fill all fields(except 5G RES*) at once using `ComputeAll()`.
+Be sure that this uses the bare AMF value in `*Milenage` and the MAC-S value might be a unwanted one.
+Call each function with the right parameters to get the right values.
+
+```go
+if err := mil.ComputeAll(); err != nil {
 	// ...
 }
 ```
