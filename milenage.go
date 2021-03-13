@@ -132,7 +132,7 @@ func (m *Milenage) ComputeAll() error {
 		return fmt.Errorf("F1() failed: %w", err)
 	}
 
-	if _, err := m.F1Star(m.SQN, []byte{0x00, 0x00}); err != nil {
+	if _, err := m.F1Star(m.SQN, m.AMF); err != nil {
 		return fmt.Errorf("F1Star() failed: %w", err)
 	}
 
@@ -351,8 +351,9 @@ func (m *Milenage) GenerateAUTN() ([]byte, error) {
 }
 
 // GenerateAUTS generates AUTS using the current values in Milenage
-// in the way described in 5.1.1.3, TS 33.105 and 6.3.3, TS 33.102
-// (MAC-S and AK-S are re-calculated).
+// in the way described in 5.1.1.3, TS 33.105 and 6.3.3, TS 33.102.
+//
+// Note: MAC-S and AK-S are re-calculated with AMF=0x0000.
 func (m *Milenage) GenerateAUTS() ([]byte, error) {
 	if err := m.validateLength(); err != nil {
 		return nil, err
