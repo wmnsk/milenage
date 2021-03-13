@@ -3,7 +3,8 @@
 // found in the LICENSE file.
 
 /*
-Package milenage provides functions of MILENAGE algorithm set defined in 3GPP TS 35.205.
+Package milenage provides the set of functions of MILENAGE algorithm set defined in 3GPP TS 35.205
+and some helpers to be used during the authentication procedure.
 */
 package milenage
 
@@ -121,6 +122,10 @@ func ComputeOPc(k, op []byte) ([]byte, error) {
 
 // ComputeAll fills all the fields in *Milenage struct.
 func (m *Milenage) ComputeAll() error {
+	if err := m.validateLength(); err != nil {
+		return err
+	}
+
 	if _, err := m.F1(); err != nil {
 		return fmt.Errorf("F1() failed: %w", err)
 	}
@@ -168,6 +173,10 @@ func (m *Milenage) F1Star(sqn, amf []byte) ([]byte, error) {
 // F2345 takes key K and random challenge RAND, and returns response RES,
 // confidentiality key CK, integrity key IK and anonymity key AK.
 func (m *Milenage) F2345() (res, ck, ik, ak []byte, err error) {
+	if err := m.validateLength(); err != nil {
+		return nil, nil, nil, nil, err
+	}
+
 	if m.OPc == nil {
 		if err := m.computeOPc(); err != nil {
 			return nil, nil, nil, nil, err
@@ -236,6 +245,10 @@ func (m *Milenage) F2345() (res, ck, ik, ak []byte, err error) {
 // F5Star is the anonymity key derivation function for the re-synchronisation message.
 // F5Star takes key K and random challenge RAND, and returns resynch anonymity key AK.
 func (m *Milenage) F5Star() (aks []byte, err error) {
+	if err := m.validateLength(); err != nil {
+		return nil, err
+	}
+
 	if m.OPc == nil {
 		if err := m.computeOPc(); err != nil {
 			return nil, err
@@ -275,6 +288,10 @@ func (m *Milenage) F5Star() (aks []byte, err error) {
 // Note that this function should be called after all other calculations
 // is done (to generate RAND and RES).
 func (m *Milenage) ComputeRESStar(mcc, mnc string) ([]byte, error) {
+	if err := m.validateLength(); err != nil {
+		return nil, err
+	}
+
 	if len(mcc) != 3 {
 		return nil, fmt.Errorf("invalid MCC: %s", mcc)
 	}
@@ -316,6 +333,10 @@ func (m *Milenage) ComputeRESStar(mcc, mnc string) ([]byte, error) {
 // GenerateAUTN generates AUTN uing the current values in Milenage
 // in the way described in 5.1.1.1, TS 33.105 and 6.3.2, TS 33.102.
 func (m *Milenage) GenerateAUTN() ([]byte, error) {
+	if err := m.validateLength(); err != nil {
+		return nil, err
+	}
+
 	autn := make([]byte, 16)
 	copy(autn[0:6], xor(m.SQN, m.AK))
 	copy(autn[6:8], m.AMF)
@@ -327,6 +348,10 @@ func (m *Milenage) GenerateAUTN() ([]byte, error) {
 // in the way described in 5.1.1.3, TS 33.105 and 6.3.3, TS 33.102
 // (MAC-S and AK-S are re-calculated).
 func (m *Milenage) GenerateAUTS() ([]byte, error) {
+	if err := m.validateLength(); err != nil {
+		return nil, err
+	}
+
 	// The AMF used to calculate MAC-S assumes a dummy value of all
 	// zeros so that it does not need to be transmitted in the clear
 	// in the re-synch message (6.3.3, TS 33.102).
@@ -395,6 +420,10 @@ func encrypt(key, plain []byte) ([]byte, error) {
 }
 
 func (m *Milenage) f1base(sqn, amf []byte) ([]byte, error) {
+	if err := m.validateLength(); err != nil {
+		return nil, err
+	}
+
 	if m.OPc == nil {
 		if err := m.computeOPc(); err != nil {
 			return nil, err
@@ -438,4 +467,48 @@ func (m *Milenage) f1base(sqn, amf []byte) ([]byte, error) {
 	}
 
 	return xor(out, m.OPc), nil
+}
+
+func (m *Milenage) validateLength() error {
+	if len(m.K) != 16 {
+		return fmt.Errorf("length of K should be %d, got: %d", 16, len(m.K))
+	}
+	if m.OP != nil && len(m.OP) != 16 {
+		return fmt.Errorf("length of OP should be %d, got: %d", 16, len(m.OP))
+	}
+	if m.OPc != nil && len(m.OPc) != 16 {
+		return fmt.Errorf("length of OPc should be %d, got: %d", 16, len(m.OPc))
+	}
+	if len(m.RAND) != 16 {
+		return fmt.Errorf("length of RAND should be %d, got: %d", 16, len(m.RAND))
+	}
+	if len(m.SQN) != 6 {
+		return fmt.Errorf("length of SQN should be %d, got: %d", 6, len(m.SQN))
+	}
+	if len(m.AMF) != 2 {
+		return fmt.Errorf("length of AMF should be %d, got: %d", 2, len(m.AMF))
+	}
+	if len(m.MACA) != 8 {
+		return fmt.Errorf("length of MACA should be %d, got: %d", 8, len(m.MACA))
+	}
+	if len(m.MACS) != 8 {
+		return fmt.Errorf("length of MACS should be %d, got: %d", 8, len(m.MACS))
+	}
+	if len(m.RES) != 8 {
+		return fmt.Errorf("length of RES should be %d, got: %d", 8, len(m.RES))
+	}
+	if len(m.CK) != 16 {
+		return fmt.Errorf("length of CK should be %d, got: %d", 16, len(m.CK))
+	}
+	if len(m.IK) != 16 {
+		return fmt.Errorf("length of IK should be %d, got: %d", 16, len(m.IK))
+	}
+	if len(m.AK) != 6 {
+		return fmt.Errorf("length of AK should be %d, got: %d", 6, len(m.AK))
+	}
+	//if len(m.AKS) != 6 {
+	//	return fmt.Errorf("length of AKS should be %d, got: %d", 6, len(m.AKS))
+	//}
+
+	return nil
 }
