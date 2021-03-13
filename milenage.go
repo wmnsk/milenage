@@ -47,8 +47,6 @@ type Milenage struct {
 	// SQN is a 48-bit sequence number that is an input to either of the functions f1 and f1*.
 	// (For f1* this input is more precisely called SQNMS.)
 	SQN []byte
-	// TEMP is a 128-bit value used within the computation of the functions.
-	// TEMP []byte
 }
 
 // New initializes a new MILENAGE algorithm.
@@ -309,6 +307,39 @@ func (m *Milenage) ComputeRESStar(mcc, mnc string) ([]byte, error) {
 
 	out := mac.Sum(nil)
 	return out[len(out)-16:], nil
+}
+
+// GenerateAUTN generates AUTN uing the current values in Milenage
+// in the way described in 5.1.1.1, TS 33.105 and 6.3.2, TS 33.102.
+func (m *Milenage) GenerateAUTN() ([]byte, error) {
+	autn := make([]byte, 16)
+	copy(autn[0:6], xor(m.SQN, m.AK))
+	copy(autn[6:8], m.AMF)
+	copy(autn[8:16], m.MACA)
+	return autn, nil
+}
+
+// GenerateAUTS generates AUTS using the current values in Milenage
+// in the way described in 5.1.1.3, TS 33.105 and 6.3.3, TS 33.102
+// (MAC-S and AK-S are re-calculated).
+func (m *Milenage) GenerateAUTS() ([]byte, error) {
+	// The AMF used to calculate MAC-S assumes a dummy value of all
+	// zeros so that it does not need to be transmitted in the clear
+	// in the re-synch message (6.3.3, TS 33.102).
+	macS, err := m.F1Star(m.SQN, []byte{0x00, 0x00})
+	if err != nil {
+		return nil, err
+	}
+	aks, err := m.F5Star()
+	if err != nil {
+		return nil, err
+	}
+
+	auts := make([]byte, 14)
+	copy(auts[0:6], xor(m.SQN, aks))
+	copy(auts[6:14], macS)
+
+	return auts, nil
 }
 
 // computeOPc computes OPc from K and OP inside m.
