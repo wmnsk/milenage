@@ -2,9 +2,8 @@
 
 MILENAGE algorithm implemented in the Go Programming Language.
 
-[![CircleCI](https://circleci.com/gh/wmnsk/milenage.svg?style=shield)](https://circleci.com/gh/wmnsk/milenage)
-![golangci-lint](https://github.com/wmnsk/milenage/workflows/golangci-lint/badge.svg)
-[![GoDoc](https://godoc.org/github.com/wmnsk/milenage?status.svg)](https://godoc.org/github.com/wmnsk/milenage)
+![CI status](https://github.com/wmnsk/milenage/actions/workflows/go.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/wmnsk/milenage.svg)](https://pkg.go.dev/github.com/wmnsk/milenage)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/wmnsk/milenage/blob/master/LICENSE)
 
 ## Quickstart
@@ -71,7 +70,7 @@ if err != nil {
 }
 ```
 
-Get OPc from K and OP. This is not the method on `*Milenage`.
+Get OPc from K and OP. This is not the method on `*Milenage`. An example program can be found [here](./examples/compute_opc).
 
 ```go
 opc, err := milenage.ComputeOPc(
