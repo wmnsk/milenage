@@ -109,6 +109,11 @@ if err := mil.ComputeAll(); err != nil {
 }
 ```
 
+## Notes
+
+This implementation may not pass _all_ of the test cases defined in TS 35.207 because it contains a case
+whose payload to compute is not aligned to byte, which I believe won't happen in the real-world implementation as of 2022.
+
 ## Author
 
 Yoshiyuki Kurauchi ([Website](https://wmnsk.com/) / [Twitter](https://twitter.com/wmnskdmms))
