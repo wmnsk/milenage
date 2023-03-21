@@ -2,7 +2,8 @@
 
 MILENAGE algorithm implemented in the Go Programming Language.
 
-![CI status](https://github.com/wmnsk/milenage/actions/workflows/go.yml/badge.svg)
+[![CI status](https://github.com/wmnsk/milenage/actions/workflows/go.yml/badge.svg)](https://github.com/wmnsk/milenage/actions/workflows/go.yml)
+[![golangci-lint](https://github.com/wmnsk/milenage/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/wmnsk/milenage/actions/workflows/golangci-lint.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wmnsk/milenage.svg)](https://pkg.go.dev/github.com/wmnsk/milenage)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/wmnsk/milenage/blob/master/LICENSE)
 
